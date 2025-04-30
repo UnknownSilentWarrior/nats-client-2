@@ -1,8 +1,6 @@
 package io.nats.hello;
 
-
 import io.nats.client.*;
-import io.nats.client.api.PublishAck;
 import io.nats.client.api.StorageType;
 import io.nats.client.api.StreamConfiguration;
 import io.nats.client.api.StreamInfo;
@@ -11,40 +9,37 @@ import io.nats.client.support.JsonUtils;
 import java.io.IOException;
 import java.time.Duration;
 
-public class HelloWorld {
-    public static void main(String[] args) {
-        try (Connection nc = Nats.connect("nats://demo.nats.io")) {
+public class StreamSimple
+{
+    public static void main(String[] args)
+    {
+        try(Connection nc = Nats.connect("nats://demo.nats.io"))
+        {
             JetStreamManagement jsm = nc.jetStreamManagement();
 
-            // Build configuration
+            // Build the configuration
             StreamConfiguration streamConfig = StreamConfiguration.builder()
-                    .name("hello")  // Name of stream
-                    .subjects("world")  // Name of subject
+                    .name("hello")
                     .storageType(StorageType.Memory)
+                    .subjects("world")
                     .build();
 
             // Create the stream
             StreamInfo streamInfo = jsm.addStream(streamConfig);
+
             JsonUtils.printFormatted(streamInfo);
 
             JetStream js = nc.jetStream();
-            PublishAck ack = js.publish("world", "one".getBytes());
-            JsonUtils.printFormatted(ack);
+            js.publish("world", "one-data".getBytes());
+            js.publish("world", "two-data".getBytes());
 
-            ack = js.publish("world", "two".getBytes());
-            JsonUtils.printFormatted(ack);
-
-
-            //----------- Subscription ------------------------------------
-            JetStreamSubscription sub = js.subscribe("world");  // world - Subject name
-            Message m = sub.nextMessage(Duration.ofSeconds(3));
-            m.ack();
+            JetStreamSubscription sub = js.subscribe("world");
+            Message m = sub.nextMessage(Duration.ofSeconds(1));
             System.out.println("Message: " + m.getSubject() + " " + new String(m.getData()));
             JsonUtils.printFormatted(m.metaData());
 
-            m = sub.nextMessage(Duration.ofSeconds(3));
-            m.ack();
-            System.out.println("Message: " + m.getSubject() + " " + new String(m.getData()));
+            m = sub.nextMessage(Duration.ofSeconds(1));
+            System.out.println("Message2: " + m.getSubject() + " " + new String(m.getData()));
             JsonUtils.printFormatted(m.metaData());
 
         } catch (InterruptedException | IOException | JetStreamApiException e) {

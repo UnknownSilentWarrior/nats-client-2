@@ -27,7 +27,10 @@ public class PublishAsync
                 CompletableFuture<PublishAck> future = js.publishAsync("world", ("data"+i).getBytes());
                 futures.add(future);
             }
+
+            // Sleep 5 seconds to finish publishing all the data
             Thread.sleep(5000);
+
             for(CompletableFuture<PublishAck> future : futures) {
                 PublishAck ack = future.get(1, TimeUnit.SECONDS);
                 System.out.println(ack);
